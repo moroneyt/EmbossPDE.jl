@@ -225,7 +225,14 @@ function subs(s::Pair{Polynomial{T, :x₂}, F}, n, nodes; prefun) where {T,F}
     end
 end
 
+check_var_constency(var::Symbol, ::Polynomial{T, :x₁}) where T = var == :x₂
+check_var_constency(var::Symbol, ::Polynomial{T, :x₂}) where T = var == :x₁
+check_var_constency(var::Symbol, _) = true  # for all we know
+
 function subs(s::Pair{Symbol, F}, n, nodes; prefun) where F
+    if !check_var_constency(s[1], s[2])
+        error("Invalid variable substitution: same variable on either side.")
+    end
     if s[1] == :x₁
         subsx(s[2], n, nodes; prefun)
     elseif s[1] == :x₂
