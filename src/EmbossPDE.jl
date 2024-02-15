@@ -14,7 +14,7 @@ using Polynomials: Polynomial, ChebyshevT
 
 import Base: +, -, *
 
-export (..)  # because it's awkward to import
+export operators, variables, solve, (..)
 
 struct PDESolution{FloatType, Iter, CacheNamedTuple} <: Function
     n::Int
@@ -555,7 +555,8 @@ function __init__()
             Z[i,j] = u(grid[i], grid[j]; mask)
         end end
         fig = Makie.Figure(;size)
-        ax, hm = Makie.heatmap(fig[1:2,1:2], grid, grid, Z, axis=(aspect=1, xlabel="x", ylabel="y"))
+        # ax, hm = Makie.heatmap(fig[1:2,1:2], grid, grid, Z, axis=(aspect=1, xlabel="x", ylabel="y"))
+        ax, hm = Makie.heatmap(fig[1:2,1:2], grid, grid, Z, axis=(aspect=1)) # might not be called x and y
         ax.title = "max |rₖ| / max |bₖ| = " * string(Float32(u.cache.maxresidual))
         Makie.contour!(fig[1:2,1:2], grid,grid,Z; color=:white, levels)
         Makie.Colorbar(fig[1:2,1:2][1,2], hm)
