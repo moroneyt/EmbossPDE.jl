@@ -14,6 +14,8 @@ using Polynomials: Polynomial, ChebyshevT
 
 import Base: +, -, *
 
+export (..)  # because it's awkward to import
+
 struct PDESolution{FloatType, Iter, CacheNamedTuple} <: Function
     n::Int
     c::Vector{FloatType}
