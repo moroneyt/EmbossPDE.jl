@@ -12,6 +12,12 @@ Polynomials = "f27b6e38-b328-58d1-80ce-0feddd5e7a45"
 Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 
 [compat]
+DoubleFloats = "1"
+GenericLinearAlgebra = "0.3"
+IntervalSets = "0.7"
+LinearAlgebra = "1"
+Polynomials = "4"
+Requires = "1"
 julia = "1.10"
 
 [extras]
