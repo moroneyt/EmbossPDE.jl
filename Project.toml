@@ -1,0 +1,13 @@
+name = "EmbossPDE"
+uuid = "af4c70bd-cfb7-4661-bec4-485750df9947"
+authors = ["Tim Moroney <t.moroney@qut.edu.au> and contributors"]
+version = "0.1.0-DEV"
+
+[compat]
+julia = "1.10"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
