@@ -2,6 +2,8 @@
 
 EMbedded BOundary Spectral Solver for PDEs in two dimensions.
 
+⚠️This is a work in progress.
+
 ## Example
 Laplace's equation on a triangle with Dirichlet and Neumann boundary conditions.
 ```
