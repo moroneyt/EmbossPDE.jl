@@ -551,7 +551,8 @@ end
 
 function __init__()
     Requires.@require Makie="ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a" Makie.plot(
-        u::PDESolution; divisions=256, levels=20, size=(1200,600), diagnostics=true, mask=true
+        u::PDESolution; divisions=256, levels=20, size=(1200,600),
+        aspect=1, axis=(;aspect), diagnostics=true, mask=true
     ) = 
     begin
         gs = divisions
@@ -562,18 +563,17 @@ function __init__()
             Z[i,j] = u(grid[i], grid[j]; mask)
         end end
         fig = Makie.Figure(;size)
-        # ax, hm = Makie.heatmap(fig[1:2,1:2], grid, grid, Z, axis=(aspect=1, xlabel="x", ylabel="y"))
-        ax, hm = Makie.heatmap(fig[1:2,1:2], grid, grid, Z, axis=(aspect=1,)) # might not be called x and y
+        ax, hm = Makie.heatmap(fig[1:2,1:2], grid, grid, Z; axis)
         ax.title = "max |rₖ| / max |bₖ| = " * string(Float32(u.cache.maxresidual))
         Makie.contour!(fig[1:2,1:2], grid,grid,Z; color=:white, levels)
-        Makie.Colorbar(fig[1:2,1:2][1,2], hm)
+        Makie.Colorbar(fig[1:2,3], hm)
         if diagnostics
             N = length(u.c)
             n = round(Int, sqrt(1/4 + 2*N) - 3/2)
-            ax3, hm3 = Makie.scatter(fig[1,3], abs.(u.c).+eps(FloatType), markersize=6, axis=(xlabel="𝑘", ylabel="|𝐶ₖ|", yscale=log10))
+            ax3, hm3 = Makie.scatter(fig[1,4], abs.(u.c).+eps(FloatType), markersize=6, axis=(xlabel="𝑘", ylabel="|𝐶ₖ|", yscale=log10))
             ax3.title = "n = " * string(n) * ";  " * string(N) * " terms"
-            ax2, hm2 = Makie.scatter(fig[2,3], u.cache.svals.+eps(FloatType), markersize=6, axis=(xlabel="𝑘", ylabel="𝑆ₖ", yscale=log10))
-            Makie.lines!(fig[2,3], [0,N], u.cache.cutoff*[1,1]; color=:red)
+            ax2, hm2 = Makie.scatter(fig[2,4], u.cache.svals.+eps(FloatType), markersize=6, axis=(xlabel="𝑘", ylabel="𝑆ₖ", yscale=log10))
+            Makie.lines!(fig[2,4], [0,N], u.cache.cutoff*[1,1]; color=:red)
             ax2.title = "cond(A) ≈ " * string(Float32(u.cache.svals[1] / u.cache.svals[end]))
         end
         fig

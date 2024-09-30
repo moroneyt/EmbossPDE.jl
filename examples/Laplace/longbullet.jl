@@ -23,7 +23,7 @@ u = solve(pde, bcs...; domain)
 @show sample = u(0.5,-0.25) # arbitrary point
 benchmark = 1.00625295597  # see MATLAB code below
 @show abs(sample-benchmark) / abs(benchmark)
-plot(u)
+plot(u; aspect=2)
 
 # Lightning Laplace solver comparision https://people.maths.ox.ac.uk/trefethen/lightning.html
 # u =  laplace({[1-1i 1] 1+1i -2+1i -2-1i}, {@(z) real(z), @(z) real(z), @(z) NaN*z, @(z) real(z)}, 'tol', 1e-10); u(1-0.25i)
