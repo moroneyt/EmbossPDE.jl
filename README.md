@@ -7,7 +7,13 @@ EMbedded BOundary Spectral Solver for PDEs in two dimensions.
 ## Example
 Laplace's equation on a triangle with Dirichlet and Neumann boundary conditions.
 ```
-n = 40  # polynomial degree
+using Pkg
+pkg"activate --temp"
+pkg"add https://github.com/moroneyt/EmbossPDE.jl, GLMakie"
+using EmbossPDE
+using GLMakie: plot
+
+n = 30  # polynomial degree
 
 ∂x, ∂y, B = operators(n)
 x,y = variables()
@@ -30,8 +36,7 @@ plot(u)
 
 ### Notes
 * Domain is a simply-connected subset of $[-1,1]^2$
-* Linear problems only for now
-* Steady problems only for now
+* Linear problems only
 * See `examples` directory for more
 
 [![Build Status](https://github.com/moroneyt/EmbossPDE.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/moroneyt/EmbossPDE.jl/actions/workflows/CI.yml?query=branch%3Amain)
