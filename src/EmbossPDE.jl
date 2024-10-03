@@ -245,7 +245,7 @@ end
 function subsx(funy, n, nodes; prefun)
     @debug "subsx(funy)"
     N = (n+1)*(n+2)÷2
-    FloatType = typeof(nodes[1]*funy(prefun(nodes[1])))
+    FloatType = typeof(nodes[1]*prefun(nodes[1])*funy(prefun(nodes[1])))
     A = zeros(FloatType, N,N)
     T(n,x) = cos(n*acos(x))
     W = reduce(hcat, T.(i,nodes) for i=0:n)
@@ -253,7 +253,7 @@ function subsx(funy, n, nodes; prefun)
     Y = reduce(hcat, T.(i,funy.(prefun.(nodes))) for i=0:n)
     # S = reduce(hcat, Y[:,i+1] .* V[:,j+1] for i=0:n for j=0:n if i+j ≤ n)  # too slow
     idx = [(i,j) for i=0:n for j=0:n if i+j ≤ n]
-    S = zeros(length(nodes), length(idx))
+    S = zeros(FloatType, length(nodes), length(idx))
     Threads.@threads for k in eachindex(idx)
         (i,j) = idx[k]
         @views S[:,k] .= Y[:,i+1] .* V[:,j+1]
@@ -266,7 +266,7 @@ end
 function subsy(funx, n, nodes; prefun)
     @debug "subsy(funx)"
     N = (n+1)*(n+2)÷2
-    FloatType = typeof(nodes[1]*funx(prefun(nodes[1])))
+    FloatType = typeof(nodes[1]*prefun(nodes[1])*funx(prefun(nodes[1])))
     A = zeros(FloatType, N,N)
     rows = 1 .+ [0;cumsum(n+1:-1:2)]
     T(n,x) = cos(n*acos(x))
@@ -275,7 +275,7 @@ function subsy(funx, n, nodes; prefun)
     Y = reduce(hcat, T.(i,funx.(prefun.(nodes))) for i=0:n)
     # S = reduce(hcat, V[:,i+1] .* Y[:,j+1] for i=0:n for j=0:n if i+j ≤ n) # too slow
     idx = [(i,j) for i=0:n for j=0:n if i+j ≤ n]
-    S = zeros(length(nodes), length(idx))
+    S = zeros(FloatType, length(nodes), length(idx))
     Threads.@threads for k in eachindex(idx)
         (i,j) = idx[k]
         @views S[:,k] .= V[:,i+1] .* Y[:,j+1]
