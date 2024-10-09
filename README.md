@@ -35,8 +35,6 @@ plot(u)
 ```
 
 ### Notes
-* Domain is a simply-connected subset of $[-1,1]^2$
-* Linear problems only
 * See `examples` directory for more
 
 [![Build Status](https://github.com/moroneyt/EmbossPDE.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/moroneyt/EmbossPDE.jl/actions/workflows/CI.yml?query=branch%3Amain)
