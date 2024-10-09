@@ -401,6 +401,7 @@ function operators(FloatType, boundingbox_, n; maxdegree::Integer=1)
 end
 
 operators(boundingbox, n; maxdegree=1) = operators(Float64, boundingbox, n; maxdegree)
+operators(n; maxdegree=1) = operators(Float64, [-1..1, -1..1], n; maxdegree)
 
 variables() = Polynomials.variable.((:x₁, :x₂))
 
