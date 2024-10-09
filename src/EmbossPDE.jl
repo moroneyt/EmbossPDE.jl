@@ -597,8 +597,10 @@ function solve(raweqns...; domain, method=:qr, cutoff=eps, remove_empty_rows=tru
     # @assert all(iszero, bfit[.!idx])   # TODO: re-enable this check with a suitable tolerance
 
     N = sum(size(M,1) for M in first.(eqns))
+    N1 = size(first(eqns[1]), 1)
+    n = round(Int, sqrt(1/4 + 2*N1) - 3/2)
     maxresidual = maximum(abs, b - bfit[idx]) / maximum(abs, b) # relative to scale of b
-    @info "Solve stats" N size(A) cond(A)=svals[1]/svals[end] maxresidual
+    @info "Solve stats" n N size(A) cond(A)=svals[1]/svals[end] maxresidual
     cache = (; svals, maxresidual, cutoff=svals[1]*rtol)
 
     reconstitute(c, boundingbox, domain; cache)

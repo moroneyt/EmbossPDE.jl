@@ -14,7 +14,7 @@ domain = (≥(bottom), ≤(top))
 
 # Equations
 pde = ∂x^2 + ∂y^2 => 1
-bcs = (B(bottom)=>x, B(top)*(X*∂x+Y*∂y) => 0)
+bcs = (B(bottom) => x, B(top)*(X*∂x+Y*∂y) => 0)
 
 ## Solution
 u = solve(pde, bcs...; domain)
