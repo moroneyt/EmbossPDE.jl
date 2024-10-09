@@ -1,9 +1,9 @@
 using EmbossPDE
-using CairoMakie
+using GLMakie
 
-n = 40
+n = 60
 
-∂x, ∂y, B = operators([-1..1, 0..1], n)
+∂x, ∂y, B, X, Y = operators([-1..1, 0..1], n)
 x,y = variables()
 
 # Domain
@@ -14,8 +14,9 @@ domain = (≥(bottom), ≤(top))
 
 # Equations
 pde = ∂x^2 + ∂y^2 => 1
-bcs = (B(bottom), B(top)) .=> 0
+bcs = (B(bottom)=>x, B(top)*(X*∂x+Y*∂y) => 0)
 
-# Solution
+## Solution
 u = solve(pde, bcs...; domain)
+@show u(0.25,0.25√3)  # compare with polar.jl
 plot(u)
