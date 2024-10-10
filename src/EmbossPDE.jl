@@ -506,12 +506,12 @@ function assemble(raweqns...; remove_empty_rows=true)
     nkeepeq = sum(keeprow)
     A = Matrix{MatrixFloatType}(undef, nkeepeq, N)
     b = Vector{RHSFloatType}(undef, nkeepeq)
+    blockidxs = [0; cumsum(sum(keeprow, dims=1)[:])]
+    @assert blockidxs[end] == nkeepeq
     for j = 1:neq
         Aj = first(eqns[j])
-        blockidxs = [0; cumsum(sum(keeprow, dims=1)[:])]
-        @assert blockidxs[end] == nkeepeq
         @views A[blockidxs[j]+1:blockidxs[j+1], :] = Aj[keeprow[:,j], :]
-        b[blockidxs[j]+1:blockidxs[j+1]] = B[keeprow[:,j], j]
+        @views b[blockidxs[j]+1:blockidxs[j+1]] = B[keeprow[:,j], j]
     end
 
     # Check we didn't stuff up the indexing
