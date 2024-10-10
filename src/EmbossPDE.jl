@@ -699,14 +699,24 @@ function (u::PDESolution{FloatType})(x,y; mask=true) where FloatType
 end
 
 function __init__()
-    Requires.@require Makie="ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a" Makie.plot(
+    Requires.@require Makie="ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a" begin
+
+    function Makie.plot(
+        composed_u::ComposedFunction{T,PDESolution{U,V,W}};
+        divisions = 256, levels = 20, size = (1200,600),
+        aspect = width(first(boundingbox(composed_u.inner))) / width(last(boundingbox(composed_u.inner))),
+        axis = (;aspect), diagnostics = true, mask = true,
+        operator = identity) where {T,U,V,W}
+        
+        Makie.plot(composed_u.inner; divisions, levels, size, aspect, axis, diagnostics, mask, operator, postfun=composed_u.outer)
+    end
+
+    function Makie.plot(
         u::PDESolution; divisions = 256, levels = 20, size = (1200,600),
         aspect = width(first(boundingbox(u))) / width(last(boundingbox(u))),
         axis = (;aspect), diagnostics = true, mask = true,
         operator = identity, postfun = identity
-    ) = 
-
-    begin
+    )
         if length(divisions) == 1
             # Choose number of divisions in x and y to match the aspect ratio,
             # bounded by the passed divisions value
@@ -744,7 +754,7 @@ function __init__()
             ax2.title = "cond(A) ≈ " * string(Float32(u.cache.svals[1] / u.cache.svals[end]))
         end
         fig
-    end
+    end end
 end
 
 end # module EmbossPDE
