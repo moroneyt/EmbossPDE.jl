@@ -660,8 +660,11 @@ end
 
 function nanwrapeval(f, x, y, domain, boundingbox)
 
-    FloatType = eltype(first(boundingbox))
-    if FloatType(x) ∉ first(boundingbox) || FloatType(y) ∉ last(boundingbox)
+    # FloatType = eltype(first(boundingbox))
+    # if FloatType(x) ∉ first(boundingbox) || FloatType(y) ∉ last(boundingbox)
+    #     return NaN
+    # end
+    if x ∉ first(boundingbox) || y ∉ last(boundingbox)
         return NaN
     end
 
@@ -687,7 +690,7 @@ function nanwrapeval(f, x, y, domain, boundingbox)
     f(x, y)
 end
 
-function (u::PDESolution{FloatType})(x,y; mask=true)::FloatType where FloatType
+function (u::PDESolution{FloatType})(x,y; mask=true) where FloatType
     if mask
         nanwrapeval((x,y)->raweval(u, x, y), x, y, domain(u), boundingbox(u))
     else
@@ -699,13 +702,8 @@ function __init__()
     Requires.@require Makie="ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a" Makie.plot(
         u::PDESolution; divisions = 256, levels = 20, size = (1200,600),
         aspect = width(first(boundingbox(u))) / width(last(boundingbox(u))),
-        axis = (;aspect), diagnostics = true, mask = true
-    ) = Makie.plot(identity, u; divisions, levels, size, aspect, axis, diagnostics, mask)
-
-    Requires.@require Makie="ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a" Makie.plot(
-        f, u::PDESolution; divisions = 256, levels = 20, size = (1200,600),
-        aspect = width(first(boundingbox(u))) / width(last(boundingbox(u))),
-        axis = (;aspect), diagnostics = true, mask = true
+        axis = (;aspect), diagnostics = true, mask = true,
+        operator = identity, postfun = identity
     ) = 
 
     begin
@@ -727,7 +725,7 @@ function __init__()
         ygrid = range(last(bb).left,last(bb).right,length=gsy)
         Z = zeros(gsx,gsy)
         Threads.@threads for i=1:gsx for j=1:gsy
-            Z[i,j] = f(u(xgrid[i], ygrid[j]; mask)) # plotting f(u(x,y)) for user-supplied f in case that's helpful
+            Z[i,j] = postfun(operator(u)(xgrid[i], ygrid[j]; mask))
         end end
         fig = Makie.Figure(;size)
         ax, hm = Makie.heatmap(fig[1:2,1:2], xgrid, ygrid, Z; axis)
