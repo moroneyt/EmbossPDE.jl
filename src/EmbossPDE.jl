@@ -699,62 +699,98 @@ function (u::PDESolution{FloatType})(x,y; mask=true) where FloatType
 end
 
 function __init__()
-    Requires.@require Makie="ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a" begin
+    Requires.@require Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a" begin
 
-    function Makie.plot(
-        composed_u::ComposedFunction{T,PDESolution{U,V,W}};
-        divisions = 256, levels = 20, size = (1200,600),
-        aspect = width(first(boundingbox(composed_u.inner))) / width(last(boundingbox(composed_u.inner))),
-        axis = (;aspect), diagnostics = true, mask = true,
-        operator = identity) where {T,U,V,W}
-        
-        Makie.plot(composed_u.inner; divisions, levels, size, aspect, axis, diagnostics, mask, operator, postfun=composed_u.outer)
-    end
+        function Makie.plot(
+            composed_u::ComposedFunction{T,PDESolution{U,V,W}};
+            divisions=256, levels=20, size=(1200, 600),
+            aspect=width(first(boundingbox(composed_u.inner))) / width(last(boundingbox(composed_u.inner))),
+            axis=(; aspect), diagnostics=true, mask=true,
+            operator=identity, draw_boundaries=false) where {T,U,V,W}
 
-    function Makie.plot(
-        u::PDESolution; divisions = 256, levels = 20, size = (1200,600),
-        aspect = width(first(boundingbox(u))) / width(last(boundingbox(u))),
-        axis = (;aspect), diagnostics = true, mask = true,
-        operator = identity, postfun = identity
-    )
-        if length(divisions) == 1
-            # Choose number of divisions in x and y to match the aspect ratio,
-            # bounded by the passed divisions value
-            if aspect > 1
-                gsx, gsy = divisions, round(Int, divisions / aspect)
+            Makie.plot(composed_u.inner; divisions, levels, size, aspect, axis, diagnostics, mask, operator, postfun=composed_u.outer)
+        end
+
+        function Makie.plot(
+            u::PDESolution; divisions=256, levels=20, size=(1200, 600),
+            aspect=width(first(boundingbox(u))) / width(last(boundingbox(u))),
+            axis=(; aspect), diagnostics=true, mask=true,
+            operator=identity, postfun=identity, draw_boundaries = false
+        )
+            if length(divisions) == 1
+                # Choose number of divisions in x and y to match the aspect ratio,
+                # bounded by the passed divisions value
+                if aspect > 1
+                    gsx, gsy = divisions, round(Int, divisions / aspect)
+                else
+                    gsx, gsy = round(Int, divisions * aspect), divisions
+                end
             else
-                gsx, gsy = round(Int, divisions * aspect), divisions
+                gsx, gsy = divisions
             end
-        else
-            gsx, gsy = divisions
+
+            FloatType = eltype(u.c)
+            bb = boundingbox(u)
+            xgrid = range(first(bb).left, first(bb).right, length=gsx)
+            ygrid = range(last(bb).left, last(bb).right, length=gsy)
+            Z = zeros(gsx, gsy)
+            Threads.@threads for i = 1:gsx
+                for j = 1:gsy
+                    Z[i, j] = postfun(operator(u)(xgrid[i], ygrid[j]; mask))
+                end
+            end
+            fig = Makie.Figure(; size)
+            ax, hm = Makie.heatmap(fig[1:2, 1:2], xgrid, ygrid, Z; axis)
+            ax.title = "max |rₖ| / max |bₖ| = " * string(Float32(u.cache.maxresidual))
+            Makie.contour!(fig[1:2, 1:2], xgrid, ygrid, Z; color=:white, levels)
+            if draw_boundaries
+                draw_boundaries_(u.dom, u.boundingbox, max(gsx,gsy))
+            end
+            Makie.Colorbar(fig[1:2, 3], hm)
+            if diagnostics
+                N = length(u.c)
+                n = round(Int, sqrt(1 / 4 + 2 * N) - 3 / 2)
+                ax3, hm3 = Makie.scatter(fig[1, 4], abs.(u.c) .+ eps(FloatType), markersize=6, axis=(xlabel="𝑘", ylabel="|𝐶ₖ|", yscale=log10))
+                ax3.title = "n = " * string(n) * ";  " * string(N) * " terms"
+                ax2, hm2 = Makie.scatter(fig[2, 4], u.cache.svals .+ eps(FloatType), markersize=6, axis=(xlabel="𝑘", ylabel="𝑆ₖ", yscale=log10))
+                if u.cache.cutoff != 0
+                    Makie.lines!(fig[2, 4], [0, N], u.cache.cutoff * [1, 1]; color=:red)
+                end
+                ax2.title = "cond(A) ≈ " * string(Float32(u.cache.svals[1] / u.cache.svals[end]))
+            end
+            fig
         end
 
-        FloatType = eltype(u.c)
-        bb = boundingbox(u)
-        xgrid = range(first(bb).left,first(bb).right,length=gsx)
-        ygrid = range(last(bb).left,last(bb).right,length=gsy)
-        Z = zeros(gsx,gsy)
-        Threads.@threads for i=1:gsx for j=1:gsy
-            Z[i,j] = postfun(operator(u)(xgrid[i], ygrid[j]; mask))
-        end end
-        fig = Makie.Figure(;size)
-        ax, hm = Makie.heatmap(fig[1:2,1:2], xgrid, ygrid, Z; axis)
-        ax.title = "max |rₖ| / max |bₖ| = " * string(Float32(u.cache.maxresidual))
-        Makie.contour!(fig[1:2,1:2], xgrid, ygrid, Z; color=:white, levels)
-        Makie.Colorbar(fig[1:2,3], hm)
-        if diagnostics
-            N = length(u.c)
-            n = round(Int, sqrt(1/4 + 2*N) - 3/2)
-            ax3, hm3 = Makie.scatter(fig[1,4], abs.(u.c).+eps(FloatType), markersize=6, axis=(xlabel="𝑘", ylabel="|𝐶ₖ|", yscale=log10))
-            ax3.title = "n = " * string(n) * ";  " * string(N) * " terms"
-            ax2, hm2 = Makie.scatter(fig[2,4], u.cache.svals.+eps(FloatType), markersize=6, axis=(xlabel="𝑘", ylabel="𝑆ₖ", yscale=log10))
-            if u.cache.cutoff != 0
-                Makie.lines!(fig[2,4], [0,N], u.cache.cutoff*[1,1]; color=:red)
+        function draw_boundaries_(dom, boundingbox, divisions) # quick and hacky
+            for b = dom
+                if b.x isa Tuple
+                    interval = b.x[2]
+                    var = b.x[1][1]
+                    fun = b.x[1][2]
+                else
+                    var = b.x[1]
+                    fun = b.x[2]
+                    if var == Polynomial(:x₁)
+                        interval = boundingbox[2]
+                    else
+                        interval = boundingbox[1]
+                    end
+                end
+                if fun isa Number
+                    bfun = t -> fun
+                else
+                    bfun = t -> fun(t)
+                end
+                t = range(interval, divisions)
+                if var == Polynomial(:x₁)
+                    Makie.lines!(bfun.(t), t, color=:red, linewidth=3)
+                else
+                    Makie.lines!(t, bfun.(t), color=:red, linewidth=3)
+                end
             end
-            ax2.title = "cond(A) ≈ " * string(Float32(u.cache.svals[1] / u.cache.svals[end]))
         end
-        fig
-    end end
+
+    end
 end
 
 end # module EmbossPDE
