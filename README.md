@@ -15,7 +15,7 @@ using GLMakie: plot
 
 n = 30  # polynomial degree
 
-∂x, ∂y, B = operators(n)
+∂x, ∂y, B = operators([-1..1, -1..1], n)
 x,y = variables()
 
 # Domain
