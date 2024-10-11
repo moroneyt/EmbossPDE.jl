@@ -1,5 +1,5 @@
 using EmbossPDE
-using CairoMakie
+using GLMakie
 
 n = 60
 
