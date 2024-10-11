@@ -658,13 +658,16 @@ function destructure_boundary(boundary, boundingbox)
     op, var, fun, range
 end
 
+function inrange_within_eps(x, range)
+    x > range.left - eps(range.left) && x < range.right + eps(range.right)
+end
+
 function nanwrapeval(f, x, y, domain, boundingbox)
 
-    # FloatType = eltype(first(boundingbox))
-    # if FloatType(x) ∉ first(boundingbox) || FloatType(y) ∉ last(boundingbox)
+    # if x ∉ first(boundingbox) || y ∉ last(boundingbox)
     #     return NaN
     # end
-    if x ∉ first(boundingbox) || y ∉ last(boundingbox)
+    if !inrange_within_eps(x, first(boundingbox)) || !inrange_within_eps(y, last(boundingbox))
         return NaN
     end
 
