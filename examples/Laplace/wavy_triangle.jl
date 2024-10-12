@@ -7,8 +7,8 @@ n = 60
 ∂x, ∂y, B, X, Y, Fx, Fy = operators([0..1, 0..1], n)
 x,y = variables()
 
-f  = x -> x + 0.05*sinpi(4x)  # but not too wavy
-f′ = x -> derivative(f,x)
+f(x) = x + 0.05*sinpi(4x)  # but not too wavy
+f′(x) = derivative(f,x)
 
 # Domain
 bottom = y => 0
