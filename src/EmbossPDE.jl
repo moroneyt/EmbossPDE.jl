@@ -494,7 +494,7 @@ function assemble(raweqns...; remove_empty_rows=true)
         cutoff = eps(MatrixFloatType) * problemscale  # is this a good cutoff?
         for j = 1:neq
             Aj = first(eqns[j])
-            Threads.@threads for i = 1:N
+            for i = 1:N
                 @views if isemptyrow(Aj[i,:], B[i,j], cutoff)
                     keeprow[i,j] = false
                 end
@@ -577,7 +577,7 @@ function solve(raweqns...; domain, method=:qr, cutoff=eps, remove_empty_rows=tru
     eqns = first.(stripeqns.(raweqns))
 
     FloatType = eltype(A)
-    rtol = cutoff == eps ? eps(FloatType) : cutoff
+    rtol = cutoff == eps ? eps(FloatType)/2 : cutoff  # unit roundoff is eps/2
 
     F, svals = factorise!(A; method)
     c = linsolve(F, b; method, rtol)
