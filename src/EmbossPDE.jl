@@ -709,7 +709,7 @@ function __init__()
             divisions=256, levels=20, size=(1200, 600),
             aspect=width(first(boundingbox(composed_u.inner))) / width(last(boundingbox(composed_u.inner))),
             axis=(; aspect), diagnostics=true, mask=true,
-            operator=identity, draw_boundaries=false) where {T,U,V,W}
+            operator=identity, draw_boundary=false) where {T,U,V,W}
 
             Makie.plot(composed_u.inner; divisions, levels, size, aspect, axis, diagnostics, mask, operator, postfun=composed_u.outer)
         end
@@ -718,7 +718,7 @@ function __init__()
             u::PDESolution; divisions=256, levels=20, size=(1200, 600),
             aspect=width(first(boundingbox(u))) / width(last(boundingbox(u))),
             axis=(; aspect), diagnostics=true, mask=true,
-            operator=identity, postfun=identity, draw_boundaries = false
+            operator=identity, postfun=identity, draw_boundary = false
         )
             if length(divisions) == 1
                 # Choose number of divisions in x and y to match the aspect ratio,
@@ -746,7 +746,7 @@ function __init__()
             ax, hm = Makie.heatmap(fig[1:2, 1:2], xgrid, ygrid, Z; axis)
             ax.title = "max |rₖ| / max |bₖ| = " * string(Float32(u.cache.maxresidual))
             Makie.contour!(fig[1:2, 1:2], xgrid, ygrid, Z; color=:white, levels)
-            if draw_boundaries
+            if draw_boundary
                 draw_boundaries_(u.dom, u.boundingbox, max(gsx,gsy))
             end
             Makie.Colorbar(fig[1:2, 3], hm)
