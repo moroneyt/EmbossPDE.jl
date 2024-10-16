@@ -439,7 +439,7 @@ stripeqns(mfp::Pair{MatrixAndFunction{M,F}, T}) where {M,F,T} = first(mfp).A => 
 # somehow we also need this next one too, in case the boundary conditions are passed by the user in a vector rather than a tuple
 stripeqns(mfp::Pair{MatrixAndFunction{M}, T}) where {M,T} = first(mfp).A => last(mfp), first(mfp).var, first(mfp).f, first(mfp).boundingbox
 
-function assemble(raweqns...; remove_empty_rows=true)
+function assemble(raweqns...; remove_empty_rows=true, pde_scaling=1)
 
     # the code just sort of evolved to this point, which looks a bit hacky
     eqns_and_prefuns_and_boundingboxes = stripeqns.(raweqns)
@@ -447,6 +447,8 @@ function assemble(raweqns...; remove_empty_rows=true)
     vars = getindex.(eqns_and_prefuns_and_boundingboxes, 2)
     prefuns = getindex.(eqns_and_prefuns_and_boundingboxes, 3)
     boundingboxes = getindex.(eqns_and_prefuns_and_boundingboxes, 4)
+
+    is_pde_equation = isnothing.(boundingboxes)
 
     ubb = unique(boundingboxes)
     # We expect to get [nothing, boundingbox] from the PDE and its boundary conditions.
@@ -512,13 +514,17 @@ function assemble(raweqns...; remove_empty_rows=true)
         Aj = first(eqns[j])
         @views A[blockidxs[j]+1:blockidxs[j+1], :] = Aj[keeprow[:,j], :]
         @views b[blockidxs[j]+1:blockidxs[j+1]] = B[keeprow[:,j], j]
+        if is_pde_equation[j]
+            A[blockidxs[j]+1:blockidxs[j+1], :] .*= pde_scaling
+            b[blockidxs[j]+1:blockidxs[j+1]] .*= pde_scaling
+        end
     end
 
     # Check we didn't stuff up the indexing
     # @assert isequal(reduce(vcat, M for M in first.(eqns))[keeprow[:],:], A)
     # @assert isequal(B[keeprow[:]], b)
 
-A, b, keeprow[:], boundingbox
+A, b, keeprow[:], boundingbox, B[:]
 
 end
 
@@ -566,13 +572,13 @@ extended_precision(x::Float64) = Double64(x)
 extended_precision(x::Double64) = BigFloat(x)
 extended_precision(x) = one(extended_precision(x.value)) * x  # for ForwardDiff
 
-function solve(raweqns...; domain, method=:qr, cutoff=eps, remove_empty_rows=true, refine=false, scale_columns=true)
+function solve(raweqns...; domain, method=:qr, cutoff=eps, remove_empty_rows=true, refine=false, scale_columns=true, pde_scaling=1)
 
     if method ∉ (:qr, :svd)
         error("Invalid method.  Must be :qr or :svd")
     end
 
-    A,b,idx,boundingbox = assemble(raweqns...; remove_empty_rows)
+    A,b,idx,boundingbox,bfull = assemble(raweqns...; remove_empty_rows, pde_scaling)
 
     eqns = first.(stripeqns.(raweqns))
 
@@ -598,6 +604,9 @@ function solve(raweqns...; domain, method=:qr, cutoff=eps, remove_empty_rows=tru
         bfit_extended_precision = reduce(vcat, (M*extended_precision.(c) for M in first.(eqns)))
         r = extended_precision.(b) - bfit_extended_precision[idx]
         δc = linsolve(F, r; method, rtol) # n.b. rtol is _not_ the extended precision rtol
+        if scale_columns
+            δc ./= colnorms
+        end
         c = CoefficientType.(c + δc)
     end
 
@@ -610,7 +619,7 @@ function solve(raweqns...; domain, method=:qr, cutoff=eps, remove_empty_rows=tru
     n = round(Int, sqrt(1/4 + 2*N1) - 3/2)
     maxresidual = maximum(abs, b - bfit[idx]) / maximum(abs, b) # relative to scale of b
     @info "Solve stats" n N size(A) cond(A)=svals[1]/svals[end] maxresidual
-    cache = (; svals, maxresidual, cutoff=svals[1]*rtol)
+    cache = (; svals, maxresidual, residual=bfull-bfit, cutoff=svals[1]*rtol)
 
     reconstitute(c, boundingbox, domain; cache)
 end
