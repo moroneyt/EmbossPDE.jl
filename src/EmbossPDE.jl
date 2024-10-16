@@ -9,7 +9,7 @@ import Requires
 
 using DoubleFloats: Double64
 using IntervalSets: endpoints, width, (..)
-using LinearAlgebra: dot, svd!, qr!, diag
+using LinearAlgebra: dot, svd!, qr!, diag, norm
 using Polynomials: Polynomial, ChebyshevT
 
 import Base: +, -, *
@@ -566,7 +566,7 @@ extended_precision(x::Float64) = Double64(x)
 extended_precision(x::Double64) = BigFloat(x)
 extended_precision(x) = one(extended_precision(x.value)) * x  # for ForwardDiff
 
-function solve(raweqns...; domain, method=:qr, cutoff=eps, remove_empty_rows=true, refine=false)
+function solve(raweqns...; domain, method=:qr, cutoff=eps, remove_empty_rows=true, refine=false, scale_columns=true)
 
     if method ∉ (:qr, :svd)
         error("Invalid method.  Must be :qr or :svd")
@@ -579,8 +579,17 @@ function solve(raweqns...; domain, method=:qr, cutoff=eps, remove_empty_rows=tru
     FloatType = eltype(A)
     rtol = cutoff == eps ? eps(FloatType)/2 : cutoff  # unit roundoff is eps/2
 
+    if scale_columns
+        colnorms = norm.(eachcol(A))
+        A ./= colnorms'
+    end
+
     F, svals = factorise!(A; method)
     c = linsolve(F, b; method, rtol)
+
+    if scale_columns
+        c ./= colnorms
+    end
 
     CoefficientType = eltype(c)
 
