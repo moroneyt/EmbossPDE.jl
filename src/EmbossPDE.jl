@@ -487,7 +487,8 @@ function assemble(raweqns...; remove_empty_rows=true, pde_scaling=1)
     end
 
     # ...we might want to omit rows from [A b] that are entirely zeros
-    keeprow = trues(N, neq)
+    keeprow = ones(Bool, N, neq)
+    # keeprow = trues(N, neq)   # BitMatrix, not thread-safe
     Ascale = maximum(M->maximum(abs, M), first.(eqns))
     bscale = maximum(abs, B)
     problemscale = max(Ascale, bscale)
@@ -496,7 +497,7 @@ function assemble(raweqns...; remove_empty_rows=true, pde_scaling=1)
         cutoff = eps(MatrixFloatType) * problemscale  # is this a good cutoff?
         for j = 1:neq
             Aj = first(eqns[j])
-            for i = 1:N
+            Threads.@threads for i = 1:N
                 @views if isemptyrow(Aj[i,:], B[i,j], cutoff)
                     keeprow[i,j] = false
                 end
