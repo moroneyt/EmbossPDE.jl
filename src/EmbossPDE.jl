@@ -764,23 +764,28 @@ function __init__()
                 end
             end
             fig = Makie.Figure(; size)
-            ax, hm = Makie.heatmap(fig[1:2, 1:2], xgrid, ygrid, Z; axis)
+            ax, hm = Makie.heatmap(fig[1:3, 1:3], xgrid, ygrid, Z; axis)
             ax.title = "max |rₖ| / max |bₖ| = " * string(Float32(u.cache.maxresidual))
-            Makie.contour!(fig[1:2, 1:2], xgrid, ygrid, Z; color=:white, levels)
+            Makie.contour!(fig[1:3, 1:3], xgrid, ygrid, Z; color=:white, levels)
             if draw_boundary
                 draw_boundaries_(u.dom, u.boundingbox, max(gsx,gsy))
             end
-            Makie.Colorbar(fig[1:2, 3], hm)
+            Makie.Colorbar(fig[1:3, 4], hm)
             if diagnostics
                 N = length(u.c)
                 n = round(Int, sqrt(1 / 4 + 2 * N) - 3 / 2)
-                ax3, hm3 = Makie.scatter(fig[1, 4], abs.(u.c) .+ eps(FloatType), markersize=6, axis=(xlabel="𝑘", ylabel="|𝐶ₖ|", yscale=log10))
+                ax3, hm3 = Makie.scatter(fig[1, 5], abs.(u.c) .+ eps(FloatType), markersize=6, axis=(xlabel="𝑘", ylabel="|𝐶ₖ|", yscale=log10))
                 ax3.title = "n = " * string(n) * ";  " * string(N) * " terms"
-                ax2, hm2 = Makie.scatter(fig[2, 4], u.cache.svals .+ eps(FloatType), markersize=6, axis=(xlabel="𝑘", ylabel="𝑆ₖ", yscale=log10))
+                ax2, hm2 = Makie.scatter(fig[2, 5], u.cache.svals .+ eps(FloatType), markersize=6, axis=(xlabel="𝑘", ylabel="𝑆ₖ", yscale=log10))
                 if u.cache.cutoff != 0
-                    Makie.lines!(fig[2, 4], [0, N], u.cache.cutoff * [1, 1]; color=:red)
+                    Makie.lines!(fig[2, 5], [0, N], u.cache.cutoff * [1, 1]; color=:red)
                 end
                 ax2.title = "cond(A) ≈ " * string(Float32(u.cache.svals[1] / u.cache.svals[end]))
+                num_equations = length(u.cache.residual) ÷ N
+                resxgrid = range(1, num_equations+1, length=length(u.cache.residual))
+                ax4, hm4 = Makie.stem(fig[3, 5], resxgrid, abs.(u.cache.residual); markersize=0, axis=(xticks=1:num_equations, xlabel="Equation number", ylabel="|rₖ|"))
+                ymax = maximum(abs, u.cache.residual)
+                ax4.title = "max |rₖ| = " * string(Float32(ymax))
             end
             fig
         end
