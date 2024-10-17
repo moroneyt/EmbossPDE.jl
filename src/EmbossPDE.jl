@@ -525,7 +525,7 @@ function assemble(raweqns...; remove_empty_rows=true, pde_scaling=1)
     # @assert isequal(reduce(vcat, M for M in first.(eqns))[keeprow[:],:], A)
     # @assert isequal(B[keeprow[:]], b)
 
-A, b, keeprow[:], boundingbox, B[:]
+A, b, keeprow[:], boundingbox, B[:], is_pde_equation
 
 end
 
@@ -579,7 +579,7 @@ function solve(raweqns...; domain, method=:qr, cutoff=eps, remove_empty_rows=tru
         error("Invalid method.  Must be :qr or :svd")
     end
 
-    A,b,idx,boundingbox,bfull = assemble(raweqns...; remove_empty_rows, pde_scaling)
+    A,b,idx,boundingbox,bfull,is_pde_equation = assemble(raweqns...; remove_empty_rows, pde_scaling)
 
     eqns = first.(stripeqns.(raweqns))
 
@@ -612,7 +612,9 @@ function solve(raweqns...; domain, method=:qr, cutoff=eps, remove_empty_rows=tru
     end
 
     # compute fitted b based on the full inputs as a further check we didn't stuff up
-    bfit = reduce(vcat, (M*c for M in first.(eqns))) # no omitting zero rows here
+    bfit = reduce(vcat, (is_pde_equation[i] ? pde_scaling*(M*c) : M*c for (i,M) in pairs(first.(eqns))))
+    # bfit = reduce(vcat, (M*c for M in first.(eqns))) # no omitting zero rows here
+
     # @assert all(iszero, bfit[.!idx])   # TODO: re-enable this check with a suitable tolerance
 
     N = sum(size(M,1) for M in first.(eqns))
