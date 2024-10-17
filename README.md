@@ -14,7 +14,7 @@ pkg"add https://github.com/moroneyt/EmbossPDE.jl, GLMakie"
 using EmbossPDE
 using GLMakie: plot
 
-n = 30  # polynomial degree
+n = 60  # polynomial degree
 
 ∂x, ∂y, B = operators([-1..1, -1..1], n)
 x,y = variables()
@@ -28,11 +28,14 @@ domain = (≥(bottom), ≤(right), ≤(hypot))
 
 # Equations
 pde = ∂x^2 + ∂y^2 => 0
-bcs = (B(bottom) => x^2, B(right) => -y, B(hypot)*(∂x-∂y) => 0)
+bc1 = B(bottom) => x^2
+bc2 = B(right) => -y
+bc3 = B(hypot)*(∂x-∂y) => 0
 
 # Solution
-u = solve(pde, bcs...; domain)
+u = solve(pde, bc1, bc2, bc3; domain)
 plot(u)
+
 ```
 ![Triangle solution](https://github.com/moroneyt/EmbossPDE.jl/blob/main/triangle.png)
 
