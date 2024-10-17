@@ -7,6 +7,7 @@ EMbedded BOundary Spectral Solver for PDEs in two dimensions.
 ## Example
 Laplace's equation on a triangle with Dirichlet and Neumann boundary conditions.
 ```
+# Only needed the first time
 using Pkg
 pkg"activate --temp"
 pkg"add https://github.com/moroneyt/EmbossPDE.jl, GLMakie"
@@ -33,6 +34,7 @@ bcs = (B(bottom) => x^2, B(right) => -y, B(hypot)*(∂x-∂y) => 0)
 u = solve(pde, bcs...; domain)
 plot(u)
 ```
+![Triangle solution](https://github.com/moroneyt/EmbossPDE.jl/blob/main/triangle.png)
 
 ### Notes
 * See `examples` directory for more
