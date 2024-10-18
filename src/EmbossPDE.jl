@@ -690,23 +690,26 @@ function nanwrapeval(f, x, y, domain, boundingbox)
     # if x ∉ first(boundingbox) || y ∉ last(boundingbox)
     #     return NaN
     # end
+
+    nanval = NaN * x * y  # for ForwardDiff
+
     if !inrange_within_eps(x, first(boundingbox)) || !inrange_within_eps(y, last(boundingbox))
-        return NaN
+        return nanval
     end
 
     for boundary in domain
         op, var, fun, range = destructure_boundary(boundary, boundingbox)
         if var == Polynomials.variable(:x₁)
             if !check_condition(op, x, y, fun, range)
-                return NaN
+                return nanval
             end
         elseif var == Polynomials.variable(:x₂)
             if !check_condition(op, y, x, fun, range)
-                return NaN
+                return nanval
             end
         elseif isnothing(var) # hacky way to support arbitrary mask op(x,y)
             if !op(x, y)
-                return NaN
+                return nanval
             end
         else
             error("Boundary must be in terms of a single variable only.")
@@ -762,7 +765,8 @@ function __init__()
             Z = zeros(gsx, gsy)
             Threads.@threads for i = 1:gsx
                 for j = 1:gsy
-                    Z[i, j] = op_(u)(xgrid[i], ygrid[j]; mask)
+                    # op(u) can just accept (x,y) if no mask
+                    Z[i, j] = mask ? op_(u)(xgrid[i], ygrid[j]) : op_(u)(xgrid[i], ygrid[j]; mask)
                 end
             end
             fig = Makie.Figure(; size)
