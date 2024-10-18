@@ -573,7 +573,7 @@ extended_precision(x::Float64) = Double64(x)
 extended_precision(x::Double64) = BigFloat(x)
 extended_precision(x) = one(extended_precision(x.value)) * x  # for ForwardDiff
 
-function solve(raweqns...; domain, method=:qr, cutoff=eps, remove_empty_rows=true, refine=false, scale_columns=true, pde_scaling=1)
+function solve(raweqns...; domain, method=:qr, cutoff=eps, remove_empty_rows=true, refine=false, scale_columns=true, pde_scaling=1, show_info=true)
 
     if method ∉ (:qr, :svd)
         error("Invalid method.  Must be :qr or :svd")
@@ -621,7 +621,9 @@ function solve(raweqns...; domain, method=:qr, cutoff=eps, remove_empty_rows=tru
     N1 = size(first(eqns[1]), 1)
     n = round(Int, sqrt(1/4 + 2*N1) - 3/2)
     maxresidual = maximum(abs, b - bfit[idx]) / maximum(abs, b) # relative to scale of b
-    @info "Solve stats" n N size(A) cond(A)=svals[1]/svals[end] maxresidual
+    if show_info
+        @info "" n N size(A) cond(A)=svals[1]/svals[end] maxresidual
+    end
     cache = (; svals, maxresidual, residual=bfull-bfit, cutoff=svals[1]*rtol)
 
     reconstitute(c, boundingbox, domain; cache)
@@ -732,14 +734,14 @@ function __init__()
             axis=(; aspect), diagnostics=true, mask=true,
             operator=identity, draw_boundary=false) where {T,U,V,W}
 
-            Makie.plot(composed_u.inner; divisions, levels, size, aspect, axis, diagnostics, mask, operator, postfun=composed_u.outer)
+            Makie.plot(composed_u.inner; divisions, levels, size, aspect, axis, diagnostics, mask, operator, postfun=(u,x,y)->composed_u.outer(u))
         end
 
         function Makie.plot(
             u::PDESolution; divisions=256, levels=20, size=(1200, 600),
             aspect=width(first(boundingbox(u))) / width(last(boundingbox(u))),
             axis=(; aspect), diagnostics=true, mask=true,
-            operator=identity, postfun=identity, draw_boundary = false
+            operator=identity, postfun=(u,x,y)->u, draw_boundary = false
         )
             if length(divisions) == 1
                 # Choose number of divisions in x and y to match the aspect ratio,
@@ -760,7 +762,7 @@ function __init__()
             Z = zeros(gsx, gsy)
             Threads.@threads for i = 1:gsx
                 for j = 1:gsy
-                    Z[i, j] = postfun(operator(u)(xgrid[i], ygrid[j]; mask))
+                    Z[i, j] = postfun(operator(u)(xgrid[i], ygrid[j]; mask), xgrid[i], ygrid[j])
                 end
             end
             fig = Makie.Figure(; size)
