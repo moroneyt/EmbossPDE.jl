@@ -732,16 +732,16 @@ function __init__()
             divisions=256, levels=20, size=(1200, 600),
             aspect=width(first(boundingbox(composed_u.inner))) / width(last(boundingbox(composed_u.inner))),
             axis=(; aspect), diagnostics=true, mask=true,
-            operator=identity, draw_boundary=false) where {T,U,V,W}
+            draw_boundary=false) where {T,U,V,W}
 
-            Makie.plot(composed_u.inner; divisions, levels, size, aspect, axis, diagnostics, mask, operator, postfun=(u,x,y)->composed_u.outer(u))
+            Makie.plot(composed_u.inner; divisions, levels, size, aspect, axis, diagnostics, mask, draw_boundary, op_ = composed_u.outer)
         end
 
         function Makie.plot(
             u::PDESolution; divisions=256, levels=20, size=(1200, 600),
             aspect=width(first(boundingbox(u))) / width(last(boundingbox(u))),
             axis=(; aspect), diagnostics=true, mask=true,
-            operator=identity, postfun=(u,x,y)->u, draw_boundary = false
+            draw_boundary=false, op_ = identity
         )
             if length(divisions) == 1
                 # Choose number of divisions in x and y to match the aspect ratio,
@@ -762,7 +762,7 @@ function __init__()
             Z = zeros(gsx, gsy)
             Threads.@threads for i = 1:gsx
                 for j = 1:gsy
-                    Z[i, j] = postfun(operator(u)(xgrid[i], ygrid[j]; mask), xgrid[i], ygrid[j])
+                    Z[i, j] = op_(u)(xgrid[i], ygrid[j]; mask)
                 end
             end
             fig = Makie.Figure(; size)
