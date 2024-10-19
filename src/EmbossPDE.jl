@@ -734,7 +734,7 @@ function __init__()
             composed_u::ComposedFunction{T,PDESolution{U,V,W}};
             divisions=256, levels=20, size=(1200, 600),
             aspect=width(first(boundingbox(composed_u.inner))) / width(last(boundingbox(composed_u.inner))),
-            axis=(; aspect), diagnostics=true, mask=true,
+            axis=(;), diagnostics=true, mask=true,
             draw_boundary=false) where {T,U,V,W}
 
             Makie.plot(composed_u.inner; divisions, levels, size, aspect, axis, diagnostics, mask, draw_boundary, op_ = composed_u.outer)
@@ -743,7 +743,7 @@ function __init__()
         function Makie.plot(
             u::PDESolution; divisions=256, levels=20, size=(1200, 600),
             aspect=width(first(boundingbox(u))) / width(last(boundingbox(u))),
-            axis=(; aspect), diagnostics=true, mask=true,
+            axis=(;), diagnostics=true, mask=true,
             draw_boundary=false, op_ = identity
         )
             if length(divisions) == 1
@@ -771,13 +771,14 @@ function __init__()
             end
             fig = Makie.Figure(; size)
             ax, hm = Makie.heatmap(fig[1:3, 1:3], xgrid, ygrid, Z; axis)
-            ax.title = "max |rₖ| / max |bₖ| = " * string(Float32(u.cache.maxresidual))
+            ax.aspect = aspect
             Makie.contour!(fig[1:3, 1:3], xgrid, ygrid, Z; color=:white, levels)
             if draw_boundary
                 draw_boundaries_(u.dom, u.boundingbox, max(gsx,gsy))
             end
             Makie.Colorbar(fig[1:3, 4], hm)
             if diagnostics
+                ax.title = "max |rₖ| / max |bₖ| = " * string(Float32(u.cache.maxresidual))
                 N = length(u.c)
                 n = round(Int, sqrt(1 / 4 + 2 * N) - 3 / 2)
                 ax3, hm3 = Makie.scatter(fig[1, 5], abs.(u.c) .+ eps(FloatType), markersize=6, axis=(xlabel="𝑘", ylabel="|𝐶ₖ|", yscale=log10))
