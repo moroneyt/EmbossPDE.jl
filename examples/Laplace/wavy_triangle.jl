@@ -7,7 +7,7 @@ n = 60
 ∂x, ∂y, B, X, Y, Fx, Fy = operators([0..1, 0..1], n)
 x,y = variables()
 
-f(x) = x + 0.05*sinpi(4x)  # but not too wavy
+f(x) = x + 0.02*sinpi(4x)  # but not too wavy
 f′(x) = derivative(f,x)
 
 # Domain
@@ -23,4 +23,4 @@ bcs = (B(bottom) => x, B(right) => 1-y, B(hypot)*(Fx(f′)*∂x-∂y) => 0)
 
 # Solution
 u = solve(pde, bcs...; domain)
-plot(u)
+plot(u; divisions=512)
